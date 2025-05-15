@@ -1,44 +1,10 @@
-import { Hono } from 'hono';
-import { logger } from 'hono/logger';
 import { WebSocket } from 'ws';
-import * as readline from 'readline';
 
-const upTime = new Date().toISOString();
-// Create an interface for input and output
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-const askQuestion = (question: string) => {
-  return new Promise((resolve) => {
-    rl.question(question, (answer: string) => {
-      resolve(answer);
-    });
-  });
-};
-const app = new Hono();
-const customLogger = (message: String, ...rest: String[]) =>
-  console.log(message, ...rest);
-
-app.use(logger(customLogger));
-
-app.get('/', async (c) => {
-  customLogger('response: ', c.req.raw.method, c.req.raw.url);
-  return c.text('Hello World!');
-});
-
-app.get('/health', async (c) => {
-  customLogger('UpTime: ', upTime);
-  return c.json({ message: upTime, statusCode: 200 }, 200);
-});
-
-// Binance WebSocket setup
-let ws: WebSocket;
-let isClosing = false;
-
-// Function to initialize WebSocket connection
-function startWebSocket(symbol: string) {
-  const binanceWsUrl = `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}usdt@aggTrade`;
+function startWebSocket(symbol: string = 'init') {
+  // Binance WebSocket setup
+  let ws: WebSocket;
+  let isClosing = false;
+  const binanceWsUrl = `wss://stream.binance.com:9443/ws/${symbol}usdt@aggTrade`;
   if (isClosing) return;
 
   ws = new WebSocket(binanceWsUrl);
@@ -70,6 +36,7 @@ function startWebSocket(symbol: string) {
         quantity: trade.q,
         tradeTime: new Date(trade.T).toISOString(),
       });
+      return trade;
     } catch (error) {
       console.error(
         'Error parsing WebSocket message:',
@@ -98,20 +65,4 @@ function startWebSocket(symbol: string) {
   });
 }
 
-app.notFound((c) => {
-  return c.json({ message: 'Not Found', ok: false }, 404);
-});
-
-const main = async () => {
-  // Get user input using await
-  const symbol = await askQuestion('Input crypto name? \n');
-  // Start WebSocket connection
-  startWebSocket(symbol as string);
-  // Close the readline interface
-  rl.close();
-};
-
-// Call the main async function
-main();
-
-export default app;
+export default startWebSocket;
