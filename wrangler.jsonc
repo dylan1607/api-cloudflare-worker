@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "api-cloudflare",
+  "name": "api",
   "main": "src/index.tsx",
   "compatibility_date": "2025-05-15",
   "compatibility_flags": ["nodejs_compat"]
